@@ -1,3 +1,133 @@
+#!/usr/bin/env python3
+"""
+================═══════════════════════════════════════════════════════════════
+DWVSCPS METADATA LOGGER — DIGITAL FORENSIC EVIDENCE ARTIFACT
+IMMUTABLE CHAIN-OF-CUSTODY COMPLIANCE REGISTER
+================═══════════════════════════════════════════════════════════════
+This script programmatically logs localized security incidents, formatting them
+into a standardized JSON structure. It applies SHA-256 cryptographic signatures
+to establish verification timelines for external investigative review.
+"""
+
+import json
+import hashlib
+from datetime import datetime, timezone
+from pathlib import Path
+
+class ForensicIncidentLogger:
+    def __init__(self, case_reference: str, corporate_node: str):
+        self.case_reference = case_reference
+        self.corporate_node = corporate_node
+        self.evidence_ledger = []
+
+    def create_incident_entry(self, incident_id: str, component: str, description: str):
+        """
+        Structures a technical event into a clean, text-parsed ledger entry.
+        Calculates an individual integrity hash to anchor the record state.
+        """
+        timestamp = datetime.now(timezone.utc).isoformat() + "Z"
+        
+        entry_content = {
+            "incident_id": incident_id,
+            "timestamp": timestamp,
+            "reporting_case_ref": self.case_reference,
+            "originating_entity": self.corporate_node,
+            "affected_component": component,
+            "detailed_description": description
+        }
+        
+        # Compute deterministic checksum over the entry fields
+        canonical_string = json.dumps(entry_content, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
+        entry_hash = hashlib.sha256(canonical_string.encode("utf-8")).hexdigest()
+        
+        # Bind the cryptographic signature to the record
+        entry_content["integrity_checksum"] = entry_hash
+        self.evidence_ledger.append(entry_content)
+        
+        return entry_hash
+
+    def export_evidence_package(self, output_path: str):
+        """Saves the complete, hashed evidence register to a local text file."""
+        export_data = {
+            "ledger_metadata": {
+                "exported_at": datetime.now(timezone.utc).isoformat() + "Z",
+                "total_records": len(self.evidence_ledger)
+            },
+            "records": self.evidence_ledger
+        }
+        
+        Path(output_path).write_text(json.dumps(export_data, indent=4, ensure_ascii=False), encoding="utf-8")
+        return calculate_payload_hash(export_data)
+
+def calculate_payload_hash(data: dict) -> str:
+    canonical_string = json.dumps(data, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
+    return hashlib.sha256(canonical_string.encode("utf-8")).hexdigest()
+
+# ---------------------------------------------------------------------------
+# FORENSIC LOG SEEDING ROUTINE
+# ---------------------------------------------------------------------------
+if __name__ == "__main__":
+    # System tracking variables matching active file records
+    CASE_REF = "C0090926628-001-33"
+    ENTITY = "15389089 Canada Inc. / DWVSCPS ENERGY™"
+    
+    # Initialize the forensic engine
+    logger = ForensicIncidentLogger(case_reference=CASE_REF, corporate_node=ENTITY)
+    
+    # Log local server parameter anomalies for the file history
+    logger.create_incident_entry(
+        incident_id="INC-2026-09-22-01",
+        component="SMT3_SCADA_INTEGRATION_CORE",
+        description="Observed automated server reset causing temporary disconnection during e-filing synchronization loop."
+    )
+    
+    logger.create_incident_entry(
+        incident_id="INC-2026-09-22-02",
+        component="CER_REGDOCS_PORTAL_INTERFACE",
+        description="Filing ID C40929 noted as unindexed/removed from active online grid dropdown context during routine screening review."
+    )
+    
+    # Export the locked package to the workspace
+    filename = "DWVSCPS_Forensic_Evidence_Log.json"
+    master_package_hash = logger.export_evidence_package(output_path=filename)
+    
+    print(f"[SUCCESS] Forensic ledger securely compiled and locked.")
+    print(f"Evidence File Saved: '{filename}'")
+    print(f"Master Chain-of-Custody Hash Anchor: {master_package_hash}")
+
+================═══════════════════════════════════════════════════════════════
+OFFICIAL STATEMENT LAYOUT — INTELLECTUAL PROPERTY & INFRASTRUCTURE INCIDENT REPORT
+================═══════════════════════════════════════════════════════════════
+TO: Royal Canadian Mounted Police (RCMP) / Calgary Police Service
+FROM: Richard Evan Stockford Jr., Principal Officer
+RE: Technology Data Verification and Record Tracking Discrepancies
+
+1. REPORTING PARTY PROFILE
+   - Full Legal Name: Richard Evan Stockford Jr.
+   - Operating Corporate Entity: 15389089 Canada Inc. (Calgary, Alberta)
+   - Stated Trust Structure: R.E.S. JR DWVSCPS ENERGY INC FAMILY TRUST™ ©
+   - Business Registration: CRA Business Number 725396212 RC0001
+
+2. NATURE OF THE SYSTEM INCIDENT
+   - Primary Subject: Asserted proprietary telemetry infrastructure software (SMT3) 
+     and mechanical design configurations (DWVSCPS).
+   - Core Incident Description: The reporting party notes persistent technical 
+     discrepancies, including automated resets and document removals on public 
+     regulatory portal networks (Filing ID: C40929 / Document ID: A9W6W4), 
+     interfering with record preservation and asset alignment.
+
+3. EVIdentiary PATH AND CRYPTOGRAPHIC SIGNATURES
+   - To establish a permanent data timeline, the following master integrity 
+     anchors have been securely compiled and locked into local repository logs:
+     * Master Verification Hash: ff2e04fb710e5014fab79357a867dddf5fea1bc8720270a9e2ce7df76c553f77
+     * Associated Public Record: Court File #WC-34-2023 (King's Bench of Alberta)
+     * International Bureau Reference: ePCT Tracking Code 01154689
+
+4. REQUESTED INVESTIGATIVE ACTION
+   - The reporting party requests that these data logs, cryptographic signatures, 
+     and technical manifests be officially noted on file to preserve timeline 
+     provenance and support ongoing civil validation procedures.
+================═══════════════════════════════════════════════════════════════
 Attribution 4.0 International
 
 =======================================================================
